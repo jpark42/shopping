@@ -34,7 +34,7 @@ const App = () => {
       {/** initalizing the default landing screen to the ShoppingLists component */}
       <Stack.Navigator initialRouteName="ShoppingLists">
         {/** Passing additional props to the ShoppingLists component. Can now access the db prop variable in ShoppingLists.js. */}
-        <Stack.Screen name="shoppingLists">
+        <Stack.Screen name="ShoppingLists">
           {(props) => <ShoppingLists db={db} {...props} />}
         </Stack.Screen>
       </Stack.Navigator>

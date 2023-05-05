@@ -1,4 +1,4 @@
-import { View, FlatList, Text } from "react–native";
+import { View, FlatList, StyleSheet, Text } from "react-native";
 import { useState, useEffect } from "react";
 // import firebase functions for querying data
 import { collection, getDocs } from "firebase/firestore";
