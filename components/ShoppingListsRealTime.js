@@ -11,10 +11,18 @@ import {
 } from "react-native";
 import { useState, useEffect } from "react";
 // import firebase functions for querying data
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 
 //Create and export the component, then destructuring the props "db" object that’s passed to the component
-const ShoppingListsRealTime = ({ db }) => {
+const ShoppingListsRealTime = ({ db, route }) => {
+  const { userID } = route.params;
+
   const [lists, setLists] = useState([]);
   const [listName, setListName] = useState("");
   const [item1, setItem1] = useState("");
@@ -33,7 +41,7 @@ const ShoppingListsRealTime = ({ db }) => {
   // execute when component mounted or updated
   useEffect(() => {
     const unsubShoppinglists = onSnapshot(
-      collection(db, "shopppinglists"),
+      query(collection(db, "shopppinglists"), where("uid", "==", userID)),
       (documentsSnapshot) => {
         let newLists = [];
         documentsSnapshot.forEach((doc) => {
@@ -113,6 +121,7 @@ const ShoppingListsRealTime = ({ db }) => {
           style={styles.addButton}
           onPress={() => {
             const newList = {
+              uid: userID,
               name: listName,
               items: [item1, item2],
             };
