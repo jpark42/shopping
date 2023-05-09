@@ -1,3 +1,6 @@
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
+
 // import react Navigation
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -6,7 +9,9 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 // import the screens
-import ShoppingLists from "./components/ShoppingLists";
+// import ShoppingLists from "./components/ShoppingLists";
+import ShoppingListsRealTime from "./components/ShoppingListsRealTime";
+import Welcome from "./components/Welcome";
 
 // Create the navigator
 const Stack = createNativeStackNavigator();
@@ -32,10 +37,11 @@ const App = () => {
   return (
     <NavigationContainer>
       {/** initalizing the default landing screen to the ShoppingLists component */}
-      <Stack.Navigator initialRouteName="ShoppingLists">
+      <Stack.Navigator initialRouteName="Welcome">
+        <Stack.Screen name="Welcome" component={Welcome} />
         {/** Passing additional props to the ShoppingLists component. Can now access the db prop variable in ShoppingLists.js. */}
-        <Stack.Screen name="ShoppingLists">
-          {(props) => <ShoppingLists db={db} {...props} />}
+        <Stack.Screen name="ShoppingListsRealTime">
+          {(props) => <ShoppingListsRealTime db={db} {...props} />}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
