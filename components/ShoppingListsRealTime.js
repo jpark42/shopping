@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useState, useEffect } from "react";
+
 // import firebase functions for querying data
 import {
   collection,
@@ -17,7 +18,11 @@ import {
   onSnapshot,
   query,
   where,
+  DocumentSnapshot,
 } from "firebase/firestore";
+
+// Importing storage for native apps
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 //Create and export the component, then destructuring the props "db" object that’s passed to the component
 const ShoppingListsRealTime = ({ db, route }) => {
@@ -27,6 +32,8 @@ const ShoppingListsRealTime = ({ db, route }) => {
   const [listName, setListName] = useState("");
   const [item1, setItem1] = useState("");
   const [item2, setItem2] = useState("");
+
+  let unsubShoppinglists;
 
   /* useEffect() attaches listener only once, when component is mounted
         [] - dependency array is empty, we don't need to call useEffect more than once as
@@ -40,22 +47,53 @@ const ShoppingListsRealTime = ({ db, route }) => {
     */
   // execute when component mounted or updated
   useEffect(() => {
-    const unsubShoppinglists = onSnapshot(
-      query(collection(db, "shopppinglists"), where("uid", "==", userID)),
-      (documentsSnapshot) => {
+    // If connected to internet, fetch data from firebase db. Else, call loadCacheLists() which fetches data from AsyncStorage instead
+    if (isConnected === "true") {
+      // unregister current onSnapshot() listener to avoid registering multiple listeners when
+      // useEffect code is re-executed.
+      if (unsubShoppinglists) unsubShoppinglists();
+      unsubShoppinglists = null;
+
+      const q = query(
+        collection(db, "shopppinglists"),
+        where("uid", "==", userID)
+      );
+
+      unsubShoppinglists = onSnapshot(q, (documentsSnapshot) => {
         let newLists = [];
         documentsSnapshot.forEach((doc) => {
           newLists.push({ id: doc.id, ...doc.data() });
         });
+        cacheShoppingLists(newLists);
         setLists(newLists);
-      }
-    );
+      });
+    } else loadCachedLists();
+
     // execute when the component will be unmounted
     // to clean the memory when listener is not needed any more
     return () => {
       if (unsubShoppinglists) unsubShoppinglists();
     };
-  }, []);
+    //ShoppingLists’s useEffect() callback function can be called multiple times, as isConnected’s status can change at any time.
+  }, [isConnected]);
+
+  // async function that sets lists with cached value
+  // || [] will assign an empty array to cachedLists if when the shopping_lists item hasn’t been set yet in AsyncStorage
+  const loadCachedLists = async () => {
+    const cachedLists = (await AsyncStorage.getItem("shopping_lists")) || [];
+    setLists(JSON.parse(cachedLists));
+  };
+
+  const cacheShoppingLists = async (listsToCache) => {
+    try {
+      await AsyncStorage.setItem(
+        "shopping_lists",
+        JSON.stringify(listsToCache)
+      );
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   const addShoppingList = async (newList) => {
     /*addDoc will add new document to collection and generate id
@@ -97,40 +135,44 @@ const ShoppingListsRealTime = ({ db, route }) => {
           </View>
         )}
       />
-      <View style={styles.listForm}>
-        <TextInput
-          style={styles.listName}
-          placeholder="List Name"
-          value={listName}
-          onChangeText={setListName}
-        />
-        <TextInput
-          style={styles.item}
-          placeholder="Item #1"
-          value={item1}
-          onChangeText={setItem1}
-        />
-        <TextInput
-          style={styles.item}
-          placeholder="Item #2"
-          value={item2}
-          onChangeText={setItem2}
-        />
-        {/** Creates new object out of 3 state's values and then calls addShoppingList function defined above*/}
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            const newList = {
-              uid: userID,
-              name: listName,
-              items: [item1, item2],
-            };
-            addShoppingList(newList);
-          }}
-        >
-          <Text style={styles.addButtonText}>Add</Text>
-        </TouchableOpacity>
-      </View>
+      {/** Using tertiary operator: if connected to internet, be able to access the form to add to shoppingLists */}
+      {/**if not connected to internet, disable access to the form to add shoppingLists by setting value to null */}
+      {isConnected === true ? (
+        <View style={styles.listForm}>
+          <TextInput
+            style={styles.listName}
+            placeholder="List Name"
+            value={listName}
+            onChangeText={setListName}
+          />
+          <TextInput
+            style={styles.item}
+            placeholder="Item #1"
+            value={item1}
+            onChangeText={setItem1}
+          />
+          <TextInput
+            style={styles.item}
+            placeholder="Item #2"
+            value={item2}
+            onChangeText={setItem2}
+          />
+          {/** Creates new object out of 3 state's values and then calls addShoppingList function defined above*/}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => {
+              const newList = {
+                uid: userID,
+                name: listName,
+                items: [item1, item2],
+              };
+              addShoppingList(newList);
+            }}
+          >
+            <Text style={styles.addButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
       {Platform.OS === "ios" ? (
         <KeyboardAvoidingView behavior="padding" />
       ) : null}
