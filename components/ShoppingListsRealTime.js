@@ -25,7 +25,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 //Create and export the component, then destructuring the props "db" object that’s passed to the component
-const ShoppingListsRealTime = ({ db, route }) => {
+const ShoppingListsRealTime = ({ db, route, isConnected }) => {
   const { userID } = route.params;
 
   const [lists, setLists] = useState([]);
