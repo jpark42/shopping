@@ -9,6 +9,7 @@ import {
   Platform,
   TouchableOpacity,
 } from "react-native";
+
 import { useState, useEffect } from "react";
 
 // import firebase functions for querying data
@@ -18,7 +19,6 @@ import {
   onSnapshot,
   query,
   where,
-  DocumentSnapshot,
 } from "firebase/firestore";
 
 // Importing storage for native apps
@@ -48,7 +48,7 @@ const ShoppingListsRealTime = ({ db, route, isConnected }) => {
   // execute when component mounted or updated
   useEffect(() => {
     // If connected to internet, fetch data from firebase db. Else, call loadCacheLists() which fetches data from AsyncStorage instead
-    if (isConnected === "true") {
+    if (isConnected === true) {
       // unregister current onSnapshot() listener to avoid registering multiple listeners when
       // useEffect code is re-executed.
       if (unsubShoppinglists) unsubShoppinglists();
@@ -166,7 +166,14 @@ const ShoppingListsRealTime = ({ db, route, isConnected }) => {
                 name: listName,
                 items: [item1, item2],
               };
-              addShoppingList(newList);
+              if (
+                newList.uid !== "" &&
+                newList.name !== "" &&
+                newList.items !== []
+              ) {
+                addShoppingList(newList);
+              } else
+                Alert.alert("You need to add name of the list and it's items");
             }}
           >
             <Text style={styles.addButtonText}>Add</Text>
